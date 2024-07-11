@@ -10,15 +10,20 @@ contract Crowdsale {
     uint256 public price;
     uint256 public maxTokens;
     uint256 public tokensSold;
+    uint256 public allowMintingOn;
+
+
+    mapping(address => bool) public whitelist;
 
     event Buy(uint256 amount, address buyer);
     event Finalize(uint256 tokensSold, uint256 ethRaised);
 
-    constructor(Token _token, uint256 _price, uint256 _maxTokens) {
+    constructor(Token _token, uint256 _price, uint256 _maxTokens, uint256 _allowMintingOn) {
         owner = msg.sender;
         token = _token;
         price = _price;
         maxTokens = _maxTokens;
+        allowMintingOn = _allowMintingOn;
     }
 
     modifier onlyOwner() {
@@ -33,8 +38,17 @@ contract Crowdsale {
         uint256 amount = msg.value / price;
         buyTokens(amount * 1e18);
     }
+    
+    function addToWhitelist(address _user) public onlyOwner {
+        require(whitelist[_user] == false, "already in whitelist");
+        whitelist[_user] = true; 
+    }
+
+
 
     function buyTokens(uint256 _amount) public payable {
+        require(block.timestamp >= allowMintingOn);
+        require(whitelist[msg.sender] == true, "must be in whitelist");
         require(msg.value == (_amount / 1e18) * price);
         require(token.balanceOf(address(this)) >= _amount);
         require(token.transfer(msg.sender, _amount));

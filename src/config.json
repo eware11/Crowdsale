@@ -8,10 +8,10 @@
     }
   },
   "11155111": {
-    "token": { "address": "0xf0C37aF2949BA051bbF6BDb6422D99A1E8903595" },
+    "token": { "address": "0x1b4158e52C2DFEEE4F79696a699d178F6840cDc9" },
 
     "crowdsale": {
-      "address": "0x616ba6efa605c010ab2e1f4b0c134e5a5a31e67f"
+      "address": "0x2C1089981d04d60ba855F93aA9B3f85f6cF89778"
     }
   }
 }

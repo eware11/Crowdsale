@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Container } from 'react-bootstrap';
-import { ethers } from 'ethers'
+import Countdown from 'react-countdown';
+import { ethers } from 'ethers';
 
 // Components
 import Navigation from './Navigation';
@@ -28,6 +29,7 @@ function App() {
   const [tokensSold, setTokensSold] = useState(0)
 
   const [isLoading, setIsLoading] = useState(true)
+  const [revealTime, setRevealTime] = useState(0)
 
   const loadBlockchainData = async () => {
     // Intiantiate provider
@@ -50,6 +52,9 @@ function App() {
     // Fetch account balance
     const accountBalance = ethers.utils.formatUnits(await token.balanceOf(account), 18)
     setAccountBalance(accountBalance)
+
+    const allowMintingOn = await crowdsale.allowMintingOn()
+    setRevealTime(allowMintingOn.toString() + "000")
 
     // Fetch price
     const price = ethers.utils.formatUnits(await crowdsale.price(), 18)
@@ -82,7 +87,10 @@ function App() {
         <Loading />
       ) : (
         <>
-          <p className='text-center'><strong>Current Price:</strong> {price} ETH</p>
+          <div className='my-4 tech center'>
+            <Countdown date={parseInt(revealTime)} className="h2" />
+          </div>
+          <p className='text-center'><strong>Current Prices:</strong> {price} ETH</p>
           <Buy provider={provider} price={price} crowdsale={crowdsale} setIsLoading={setIsLoading} />
           <Progress maxTokens={maxTokens} tokensSold={tokensSold} />
         </>

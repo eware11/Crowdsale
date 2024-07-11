@@ -1,16 +1,14 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
+
 const hre = require("hardhat");
 
+//Token deployed to: 0x1b4158e52C2DFEEE4F79696a699d178F6840cDc9//crowdsale address 0xB03C7Cb0bAa0633d96C5a1EF5b11CF98BdD84D56
+//Crowdsale deployed to: 0x2C1089981d04d60ba855F93aA9B3f85f6cF89778
 async function main() {
   const NAME = 'Dapp University'
   const SYMBOL = 'DAPP'
   const MAX_SUPPLY = '1000000'
   const PRICE = ethers.utils.parseUnits('0.025', 'ether')
+  const MINT_TIME = (Date.now() + 60000).toString().slice(0, 10)
 
   // Deploy Token
   const Token = await hre.ethers.getContractFactory("Token")
@@ -21,7 +19,7 @@ async function main() {
 
   // Deploy Crowdsale
   const Crowdsale = await hre.ethers.getContractFactory("Crowdsale")
-  const crowdsale = await Crowdsale.deploy(token.address, PRICE, ethers.utils.parseUnits(MAX_SUPPLY, 'ether'))
+  const crowdsale = await Crowdsale.deploy(token.address, PRICE, ethers.utils.parseUnits(MAX_SUPPLY, 'ether'), MINT_TIME)
   await crowdsale.deployed();
 
   console.log(`Crowdsale deployed to: ${crowdsale.address}\n`)
