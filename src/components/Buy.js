@@ -40,10 +40,11 @@ const Buy = ({ provider, price, crowdsale, setIsLoading }) => {
 
             // We need to calculate the required ETH in order to buy the tokens...
 
-            const transaction = await crowdsale.connect(signer).addToWhitelistHandler(address)
+            const transaction = await crowdsale.connect(signer).addToWhitelist(address)
             await transaction.wait()
-        } catch {
+        } catch (error) {
             window.alert('User rejected or transaction reverted')
+            console.error(error)
         }
 
         setIsLoading(true)
