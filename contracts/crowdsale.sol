@@ -15,6 +15,7 @@ contract Crowdsale {
 
     mapping(address => bool) public whitelist;
 
+    event WhitelistRequest(address user, string message);
     event Buy(uint256 amount, address buyer);
     event Finalize(uint256 tokensSold, uint256 ethRaised);
 
@@ -38,17 +39,19 @@ contract Crowdsale {
         uint256 amount = msg.value / price;
         buyTokens(amount * 1e18);
     }
+
+    function requestWhitelistAddition(address _user, string memory _message) public {
+        emit WhitelistRequest(_user, _message);
+    }
     
     function addToWhitelist(address _user) public onlyOwner {
         require(whitelist[_user] == false, "already in whitelist");
         whitelist[_user] = true; 
     }
 
-    function setMintingDate(uint _allowMintingOn) public onlyOwner{
-        allowMintingOn = _allowMintingOn;
+    function removeFromWhitelist(address _user) public onlyOwner {
+        whitelist[_user] = false;
     }
-
-
 
     function buyTokens(uint256 _amount) public payable {
         require(block.timestamp >= allowMintingOn);
