@@ -27,7 +27,7 @@ contract Crowdsale {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Caller is not the owner");
+        require(msg.sender == owner, "Must be the owner!");
         _;
     }
 
@@ -42,6 +42,10 @@ contract Crowdsale {
     function addToWhitelist(address _user) public onlyOwner {
         require(whitelist[_user] == false, "already in whitelist");
         whitelist[_user] = true; 
+    }
+
+    function setMintingDate(uint _allowMintingOn) public onlyOwner{
+        allowMintingOn = _allowMintingOn;
     }
 
 

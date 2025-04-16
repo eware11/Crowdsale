@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Container } from 'react-bootstrap';
+import Modal from 'react-bootstrap/Modal';
 import Countdown from 'react-countdown';
 import { ethers } from 'ethers';
 
@@ -78,29 +79,50 @@ function App() {
   }, [isLoading])
 
   return (
-    <Container>
-      <Navigation />
 
-      <h1 className='my-4 text-center'>Introducing DApp Token!</h1>
+    <Container fluid className='p-0 m-0'>
+      <div className='d-flex justify-content-center align-items-center'>
+      <Modal.Dialog className='w-100' style={{maxWidth:'600px'}}>
+      <Modal.Header closeButton>  
+      <Navigation />
+      </Modal.Header>
+      <Modal.Title>
+      <h1 className='my-2 text-center'><strong>Become a Founding Member of the EWare Ecosystem!</strong></h1>
+      </Modal.Title>
+      <Modal.Body> 
+      <p className='my-2 text-center'>
+        The EWare Token is the cornerstone of a powerful and expanding blockchain ecosystem. 
+        This is your opportunity to get in early on a project designed to fuel a wide range of decentralized applications and solutions built for the future.
+        As the ecosystem grows, early investors will gain priority positioning in a network driven by innovation, utility, and long-term vision.
+        Don’t just watch the future unfold—help shape it.
+        </p>
 
       {isLoading ? (
         <Loading />
       ) : (
         <>
-          <div className='my-4 tech center'>
-            <Countdown date={parseInt(revealTime)} className="h2" />
+          <div className="text-center my-4 countdown-wrapper pulse">
+          <p className="mb-2"><strong>Get ready! Early access starts in:</strong></p>
+          <div className="d-flex justify-content-center">
+          <Countdown date={parseInt(revealTime)} className="h2 countdown-timer" />
           </div>
-          <p className='text-center'><strong>Current Prices:</strong> {price} ETH</p>
+          </div>
+          <p className='my-4'><strong>Get Your Tokens:</strong> {price} ETH</p>
           <Buy provider={provider} price={price} crowdsale={crowdsale} setIsLoading={setIsLoading} />
           <Progress maxTokens={maxTokens} tokensSold={tokensSold} />
         </>
       )}
-
+      </Modal.Body>
       <hr />
-
+      <div className='my-4'>
+      <Modal.Footer>
       {account && (
         <Info account={account} accountBalance={accountBalance} />
       )}
+      </Modal.Footer>
+      </div>
+      </Modal.Dialog>
+      </div>
     </Container>
   );
 }

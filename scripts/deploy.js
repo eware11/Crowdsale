@@ -1,5 +1,6 @@
 
 const hre = require("hardhat");
+const ethers = require('ethers')
 
 //Token deployed to: 0x1b4158e52C2DFEEE4F79696a699d178F6840cDc9//crowdsale address 0xB03C7Cb0bAa0633d96C5a1EF5b11CF98BdD84D56
 //Crowdsale deployed to: 0x2C1089981d04d60ba855F93aA9B3f85f6cF89778

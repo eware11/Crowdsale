@@ -8,7 +8,7 @@ const ether = tokens
 
 describe("Crowdsale", () => {
   let token, crowdsale;
-  let deployer, user1;
+  let deployer, user1, accounts;
 
   beforeEach(async () => {
     const Crowdsale = await ethers.getContractFactory("Crowdsale");
@@ -20,7 +20,7 @@ describe("Crowdsale", () => {
     deployer = accounts[0];
     user1 = accounts[1];
 
-    crowdsale = await Crowdsale.deploy(token.address, ether(1), "1000000");
+    crowdsale = await Crowdsale.deploy(token.address, ether(1), "1000000", "1744818560");
 
     let transaction = await token
       .connect(deployer)
