@@ -62,13 +62,12 @@ contract Crowdsale {
         emit WhitelistApproved(_user);
     }
 
-    function removeFromWhitelist(address _user) public onlyOwner {
+    function removeFromWhitelist(address _user) external onlyOwner {
         whitelist[_user] = false;
     }
 
-    function buyTokens(uint256 _amount) public payable {
+    function buyTokens(uint256 _amount) public payable onlyWhitelisted{
         require(block.timestamp >= allowMintingOn);
-        require(whitelist[msg.sender] == true, "must be in whitelist");
         require(msg.value == (_amount / 1e18) * price);
         require(token.balanceOf(address(this)) >= _amount);
         require(token.transfer(msg.sender, _amount));
