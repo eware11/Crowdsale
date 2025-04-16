@@ -14,8 +14,10 @@ contract Crowdsale {
 
 
     mapping(address => bool) public whitelist;
+    mapping(address => bool) public pendingRequests;
 
-    event WhitelistRequest(address user, string message);
+    event WhitelistRequested(address indexed user, string message);
+    event WhitelistApproved(address indexed user);
     event Buy(uint256 amount, address buyer);
     event Finalize(uint256 tokensSold, uint256 ethRaised);
 
@@ -32,6 +34,11 @@ contract Crowdsale {
         _;
     }
 
+    modifier onlyWhitelisted() {
+        require(whitelist[msg.sender], "Not on whitelist");
+        _;
+    }
+
     // Buy tokens directly by sending Ether
     // --> https://docs.soliditylang.org/en/v0.8.15/contracts.html#receive-ether-function
 
@@ -40,13 +47,19 @@ contract Crowdsale {
         buyTokens(amount * 1e18);
     }
 
-    function requestWhitelistAddition(address _user, string memory _message) public {
-        emit WhitelistRequest(_user, _message);
+    function requestWhitelist(string memory _message) external {
+        require(!pendingRequests[msg.sender], "Already requested");
+        pendingRequests[msg.sender] = true;
+        
+        emit WhitelistRequested(msg.sender, _message);
     }
     
-    function addToWhitelist(address _user) public onlyOwner {
+    function addToWhitelist(address _user) external onlyOwner {
         require(whitelist[_user] == false, "already in whitelist");
+        require(pendingRequests[_user] == true, "No request found");
         whitelist[_user] = true; 
+
+        emit WhitelistApproved(_user);
     }
 
     function removeFromWhitelist(address _user) public onlyOwner {
