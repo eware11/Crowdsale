@@ -1,39 +1,42 @@
+const { ethers } = require("hardhat");
 
-const hre = require("hardhat");
-const ethers = require('ethers')
-
-//Token deployed to: 0x1b4158e52C2DFEEE4F79696a699d178F6840cDc9//crowdsale address 0xB03C7Cb0bAa0633d96C5a1EF5b11CF98BdD84D56
-//Crowdsale deployed to: 0x2C1089981d04d60ba855F93aA9B3f85f6cF89778
 async function main() {
-  const NAME = 'Dapp University'
-  const SYMBOL = 'DAPP'
-  const MAX_SUPPLY = '1000000'
-  const PRICE = ethers.utils.parseUnits('0.025', 'ether')
-  const MINT_TIME = (Date.now() + 60000).toString().slice(0, 10)
+  const [deployer] = await ethers.getSigners();
+  console.log(`🚀 Deploying contracts with account: ${deployer.address}`);
 
-  // Deploy Token
-  const Token = await hre.ethers.getContractFactory("Token")
-  const token = await Token.deploy(NAME, SYMBOL, MAX_SUPPLY)
-  await token.deployed()
+  // 1. Deploy the ERC-20 Token contract
+  const Token = await ethers.getContractFactory("Token");
+  const token = await Token.deploy("EWARE Token", "EWR", ethers.utils.parseEther("1000000")); // 1 million tokens
+  await token.deployed();
+  console.log(`✅ Token deployed at: ${token.address}`);
 
-  console.log(`Token deployed to: ${token.address}\n`)
+  // 2. Deploy the Crowdsale contract
+  const price = ethers.utils.parseEther("0.01"); // 0.01 ETH per token
+  const maxTokens = ethers.utils.parseEther("100000"); // Cap sale at 100k tokens
+  const allowMintingOn = Math.floor(Date.now() / 1000) + 60; // Start minting 1 minute from now
+  const isSaleClosed = false;
 
-  // Deploy Crowdsale
-  const Crowdsale = await hre.ethers.getContractFactory("Crowdsale")
-  const crowdsale = await Crowdsale.deploy(token.address, PRICE, ethers.utils.parseUnits(MAX_SUPPLY, 'ether'), MINT_TIME)
+  const Crowdsale = await ethers.getContractFactory("Crowdsale");
+  const crowdsale = await Crowdsale.deploy(
+    token.address,
+    price,
+    maxTokens,
+    allowMintingOn,
+    isSaleClosed
+  );
   await crowdsale.deployed();
+  console.log(`✅ Crowdsale deployed at: ${crowdsale.address}`);
 
-  console.log(`Crowdsale deployed to: ${crowdsale.address}\n`)
+  // 3. Transfer tokens to the Crowdsale contract
+  const transferAmount = ethers.utils.parseEther("100000"); // send 100k tokens to sale
+  const tx = await token.transfer(crowdsale.address, transferAmount);
+  await tx.wait();
+  console.log(`🎁 Transferred ${ethers.utils.formatEther(transferAmount)} tokens to Crowdsale`);
 
-  const transaction = await token.transfer(crowdsale.address, ethers.utils.parseUnits(MAX_SUPPLY, 'ether'))
-  await transaction.wait()
-
-  console.log(`Tokens transferred to Crowdsale\n`)
+  console.log("🎉 Deployment complete!");
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
-  process.exitCode = 1;
+  process.exit(1);
 });
