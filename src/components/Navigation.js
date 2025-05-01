@@ -1,31 +1,23 @@
-import Navbar from 'react-bootstrap/Navbar';
-import Nav from 'react-bootstrap/Nav';
-import Container from 'react-bootstrap/Container';
-import logo from '../eware.png';
+import React from 'react';
+import { Navbar, Nav, Container } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
-const Navigation = () => {
+function AppNavbar() {
   return (
-    <Container>
-      <Navbar className="my-3" expand="lg" bg="light" variant="light">
-        <Navbar.Brand href="#" className="d-flex align-items-center">
-          <img
-            alt="eware"
-            src={logo}
-            width="60"
-            height="60"
-            className="d-inline-block align-top mx-2"
-          />
-          <span className="fw-bold">EWare ICO</span>
-        </Navbar.Brand>
-        <Nav className="ms-auto">
-          <Nav.Link href="#about">About</Nav.Link>
-          <Nav.Link href="#tokenomics">Tokenomics</Nav.Link>
-          <Nav.Link href="#buy">Buy</Nav.Link>
-          <Nav.Link href="#team">Team</Nav.Link>
-          <Nav.Link href="#faq">FAQ</Nav.Link>
-        </Nav>
-      </Navbar>
-    </Container>
+    <Navbar bg="dark" variant="dark" expand="lg">
+      <Container>
+        <Navbar.Brand as={Link} to="/">MyCrowdsale</Navbar.Brand>
+        <Navbar.Toggle aria-controls="navbar-nav" />
+        <Navbar.Collapse id="navbar-nav">
+          <Nav className="ms-auto">
+            <Nav.Link as={Link} to="/whitelist">Whitelist</Nav.Link>
+            <Nav.Link as={Link} to="/buy">Buy Tokens</Nav.Link>
+            <Nav.Link as={Link} to="/status">Sale Status</Nav.Link>
+            <Nav.Link as={Link} to="/admin">Admin Panel</Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 };
 

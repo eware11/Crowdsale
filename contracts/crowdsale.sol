@@ -14,6 +14,7 @@ contract Crowdsale is ReentrancyGuard {
     uint256 public allowMintingOn;
     bool public isSaleClosed;
     uint256 public maxPerWallet;
+    uint256 applicationFee;
     
     mapping(address => uint256) public tokensPurchased;
     mapping(address => bool) public whitelist;
@@ -21,6 +22,7 @@ contract Crowdsale is ReentrancyGuard {
     
     // Proposal struct to store additional user details
     struct Proposal {
+        address userAddress;
         string name;
         string email;
         string website;
@@ -29,20 +31,21 @@ contract Crowdsale is ReentrancyGuard {
     }
     
     mapping(address => Proposal) public proposals;
+    mapping(address => bool) public applicationFeeStatus;
 
-    event WhitelistRequested(address indexed user, string message);
+    event WhitelistRequested(address indexed user, string email);
     event WhitelistApproved(address indexed user);
-    event Buy(uint256 amount, address buyer);
+    event Buy(uint256 amount, address indexed buyer);
     event Finalize(uint256 tokensSold, uint256 ethRaised);
     event WhitelistRejected(address indexed user); // optional for tracking
 
-    constructor(Token _token, uint256 _price, uint256 _maxTokens, uint256 _allowMintingOn, bool _isSaleClosed) {
+    constructor(Token _token, uint256 _price, uint256 _maxTokens, uint256 _allowMintingOn) {
         owner = msg.sender;
         token = _token;
         price = _price;
         maxTokens = _maxTokens;
         allowMintingOn = _allowMintingOn;
-        isSaleClosed = _isSaleClosed;
+        isSaleClosed = true;
     }
 
     modifier onlyOwner() {
@@ -70,19 +73,26 @@ contract Crowdsale is ReentrancyGuard {
         buyTokens(amount);
     }
 
+    function payApplicationFee(uint _fee) public payable{
+        applicationFee = _fee;
+        require(msg.value >= applicationFee);
+        applicationFeeStatus[msg.sender] = true;
+    }
+
     // Request whitelist with proposal
-    function requestWhitelist(string memory _message, string memory _name, string memory _email, string memory _website) external {
+    function requestWhitelist(string memory _message, string memory _name, string memory _email, string memory _website, uint _fee) external payable{
         require(!pendingRequests[msg.sender], "Already requested");
+        payApplicationFee(_fee);
         pendingRequests[msg.sender] = true;
         
         // Save the proposal details
-        proposals[msg.sender] = Proposal(_name, _email, _website, _message, false);
+        proposals[msg.sender] = Proposal(msg.sender, _name, _email, _website, _message, false);
 
         emit WhitelistRequested(msg.sender, _message);
     }
 
     // View a specific user's proposal
-    function viewProposal(address _user) external view returns (Proposal memory) {
+    function viewWhitelistProposal(address _user) external view returns (Proposal memory) {
         return proposals[_user];
     }
 

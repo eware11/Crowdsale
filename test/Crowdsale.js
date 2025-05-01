@@ -1,48 +1,158 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const tokens = (n) => {
-  return ethers.utils.parseUnits(n.toString(), "ether");
-};
 
-const ether = tokens
+const tokens = (n) => ethers.utils.parseUnits(n.toString(), "ether");
+const ether = tokens;
 
 describe("Crowdsale", () => {
-  let token, crowdsale;
-  let deployer, user1, accounts;
+  let token, crowdsale, deployer, buyer, requester;
+
+  const PRICE = ether(1);
+  const MAX_TOKENS = ether(50);
+  const IS_SALE_CLOSED = false;
+  const ALLOW_MINTING_ON = (Date.now() + 120000).toString().slice(0, 10);
 
   beforeEach(async () => {
-    const Crowdsale = await ethers.getContractFactory("Crowdsale");
+    [deployer, buyer, requester] = await ethers.getSigners();
+
     const Token = await ethers.getContractFactory("Token");
+    token = await Token.connect(deployer).deploy("EWare", "EW", "1000000");
 
-    token = await Token.deploy("Dapp University", "DAPP", "1000000");
+    const Crowdsale = await ethers.getContractFactory("Crowdsale");
+    crowdsale = await Crowdsale.connect(deployer).deploy(
+      token.address,
+      PRICE,
+      MAX_TOKENS,
+      ALLOW_MINTING_ON
+    );
 
-    accounts = await ethers.getSigners();
-    deployer = accounts[0];
-    user1 = accounts[1];
-
-    crowdsale = await Crowdsale.deploy(token.address, ether(1), "1000000", "1744818560");
-
-    let transaction = await token
-      .connect(deployer)
-      .transfer(crowdsale.address, tokens(1000000));
-    await transaction.wait();
+    await token.connect(deployer).transfer(crowdsale.address, tokens(1000000));
   });
 
   describe("Deployment", () => {
-    it("sends tokens to the Crowdsale contract", async () => {
-      expect(await token.balanceOf(crowdsale.address)).to.equal(
-        tokens(1000000)
-      );
+    it("sets the owner", async () => {
+      expect(await crowdsale.owner()).to.equal(deployer.address);
     });
 
-    it("returns the price", async () => {
+    it("returns the token address", async () => {
+      expect(await crowdsale.token()).to.equal(token.address);
+    });
+
+    it("sets token price", async () => {
       expect(await crowdsale.price()).to.equal(ether(1));
     });
 
-    it("returns token address", async () => {
-      expect(await crowdsale.token()).to.equal(token.address);
+    it("sets the maximum tokens an address can own", async () => {
+      expect(await crowdsale.maxTokens()).to.equal(ether(50));
+    });
+
+    it("sets the ico start date/time", async () => {
+      expect(await crowdsale.allowMintingOn()).to.equal(ALLOW_MINTING_ON);
+    });
+
+    it("starts off closed until start date/time is reached", async () => {
+      expect(await crowdsale.isSaleClosed()).to.equal(true);
     });
   });
+
+  describe("User requests Whitelist", () => {
+    const fee = ethers.utils.parseEther("0.01"); // example fee
+    const name = "Alice";
+    const email = "alice@example.com";
+    const website = "https://example.com";
+    const message = "Please whitelist me";
+    
+    beforeEach(async () => {
+      await crowdsale.connect(requester).requestWhitelist(
+        message,
+        name,
+        email,
+        website,
+        fee,
+        { value: fee }
+      );
+    })
+    it("reverts if the user has already requested to be on the whitelist", async () => {
+      await expect(
+        crowdsale.connect(requester).requestWhitelist(
+          message,
+          name,
+          email,
+          website,
+          fee,
+          { value: fee }
+        )
+      ).to.be.revertedWith("Already requested");
+    });
+
+    it('Requires user paid application fee', async () => {
+      expect(await crowdsale.paidApplication(user1).to.equal(true));
+    });
+
+      it('Creates a pending whitelist request', async () => {
+        expect(await crowdsale.pendingRequests(user1).to.equal(true));
+      });
+
+      it('Saves proposal/request details', async () => {
+        expect(await crowdsale.createProposal.to.equal(NAME, EMAIL, WEBSITE, MESSAGE, false))
+      });
+
+      it('emits whitelist requested event', async () => {
+        expect(await crowdsale.WhitelistRequested.to.equal(user1, EMAIL))
+      });
+    });
+
+  describe('View whitelist proposal', () => {
+    it('Returns the proposal and the address it was created by', async () => {
+      expect(await crowdsale.viewWhitelistProposal.to.equal(user1.name, user1.email, user1.website, 
+        user1.message, true));
+    });
+  });
+
+  describe("Adds user to whitelist", () => {
+    it('Requires the user hasnt already been added to whitelist', async () => {
+    });
+
+    it('Requires user paid application fee', async () => {
+    });
+
+    it('Approves whitelist request', async () => {
+    });
+
+    it('Emits whitelist approved event', async () => {
+    });
+  });
+
+  describe("Removes user from whitelist", () => {
+    it('Removes user from whitelist', async () => {
+      expect(await crowdsale.whitelist[user1].to.equal(false))
+    });
+
+  });
+
+  describe("Rejects whitelist request", () => {
+    it('Requires user has a pending request', async () => {
+    });
+
+    it('Changes pending request status to false', async () => {
+    });
+
+    it('Updates rejected requests mapping', async () => {
+    });
+
+    it('Emits request rejected event', async () => {
+    });
+  });
+
+  describe("Setting max tokens per user", () => {
+    it('Requires that only the owner can set this amount', async () => {
+    });
+
+    it('Sets max token amount per user', async () => {
+    });
+
+  });
+
   describe("Buying Tokens", () => {
     let transaction = tokens(10);
     let amount = tokens(10);
@@ -137,10 +247,28 @@ describe("Crowdsale", () => {
     });
   });
 
+  describe("Pausing crowdsales", () => {
+      it('Requires the user hasnt already requested to be on whitelist', async () => {
+      });
+
+      it('Requires user paid application fee', async () => {
+      });
+
+      it('Creates a pending whitelist request', async () => {
+      });
+
+      it('Saves proposal/request details', async () => {
+      });
+
+      it('emits whitelist requested event', async () => {
+      });
+  });
+
   describe("Finalzing Sale", () => {
     let transaction, result;
     let amount = tokens(10);
     let value = ether(10);
+
 
     describe("Success", () => {
       beforeEach(async () => {
@@ -178,4 +306,5 @@ describe("Crowdsale", () => {
       });
     });
   });
-});
+
+  });

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { Container } from 'react-bootstrap';
 import Modal from 'react-bootstrap/Modal';
 import Countdown from 'react-countdown';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ethers } from 'ethers';
 
 // Components
 import Navigation from './Navigation';
 import Buy from './Buy';
+import SaleStatus from './SaleStatus'; // if you have a sale status page
 import Progress from './Progress';
 import Info from './Info';
 import Loading from './Loading';
@@ -84,7 +86,20 @@ function App() {
   }, [isLoading, crowdsale, account]);
 
   return (
+    
     <Container fluid className='p-0 m-0'>
+      <div>
+         <AppNavbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/whitelist" element={<WhitelistRequest />} />
+        <Route path="/buy" element={<BuyTokens />} />
+        <Route path="/status" element={<SaleStatus />} />
+        <Route path="/admin" element={<AdminPanel />} />
+      </Routes>
+    
+    </div>
+  );
       <div className='d-flex justify-content-center align-items-center'>
         <Modal.Dialog className='w-100' style={{ maxWidth: '600px' }}>
           <Modal.Header closeButton>
@@ -98,7 +113,7 @@ function App() {
           <Modal.Body>
             <p className='my-2 text-center'>
               The EWare Token is the cornerstone of a powerful and expanding blockchain ecosystem.
-              This is your opportunity to get in early on a community designed to fuel a wide range of decentralized applications and solutions built for the future.
+              This is your opportunity to get in on a community designed to fuel a wide range of decentralized applications and solutions built for the future.
               As the ecosystem grows, early investors will gain priority positioning in a network driven by innovation, utility, and long-term vision.
               Don’t just watch the future unfold—help shape it.
             </p>
