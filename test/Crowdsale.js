@@ -7,15 +7,15 @@ const ether = tokens;
 describe("Crowdsale", () => {
   let token, crowdsale, deployer, buyer, requester;
 
-  const OWNER = deployer.address
-  const PRICE = ether(.05);
-  const MAX_TOKENS_SOLD = ether(50);
-  const MAX_TOKENS_PER_WALLET = ether(5)
-  const TOKENS_SOLD = 
-  const SALE_OPEN = Date.now()
-  const SALE_CLOSED
-  const OPEN_STATUS
-  const APPLICATION_FEE = ether(.01)
+  const OWNER = deployer.address //deployer of contract
+  const PRICE = ether(.05); //price of tokens
+  const MAX_TOKENS_SOLD = ether(50); //maximum amount of tokens sold for crowdsale
+  const MAX_TOKENS_PER_WALLET = ether(5) //maximum amount of tokens a single user can purchase for the crowdsale
+  const TOKENS_SOLD = //total amount of tokens sold for crowdsale
+  const SALE_OPEN = Date.now() //date/time the crowdsale opens for users to purchase tokens
+  const SALE_CLOSED //date/time crowdsale ends
+  const OPEN_STATUS //boolean indicating whether crowdsale is open or not
+  const APPLICATION_FEE = ether(.01) //fee users must pay to submit their whitelist request
 
   beforeEach(async () => {
     [deployer, buyer, requester] = await ethers.getSigners();
@@ -24,12 +24,7 @@ describe("Crowdsale", () => {
     token = await Token.connect(deployer).deploy("EWare", "EW", "1000000");
 
     const Crowdsale = await ethers.getContractFactory("Crowdsale");
-    crowdsale = await Crowdsale.connect(deployer).deploy(
-      token.address,
-      PRICE,
-      MAX_TOKENS,
-      ALLOW_MINTING_ON
-    );
+    crowdsale = await Crowdsale.connect(deployer).deploy(token.address, PRICE, MAX_TOKENS, ALLOW_MINTING_ON);
 
     await token.connect(deployer).transfer(crowdsale.address, tokens(1000000));
   });
@@ -45,6 +40,10 @@ describe("Crowdsale", () => {
 
     it("sets token price", async () => {
       expect(await crowdsale.price()).to.equal(ether(1));
+    });
+
+    it("sets the maximum tokens the crowdsale can sell", async () => {
+      expect(await crowdsale.maxTokens()).to.equal(ether(50));
     });
 
     it("sets the maximum tokens an address can own", async () => {

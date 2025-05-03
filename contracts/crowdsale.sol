@@ -41,24 +41,6 @@ contract Crowdsale is ReentrancyGuard {
     event TokensBought(uint256 amount, address indexed buyer);
     event FinalizeSale(uint256 tokensSold, uint256 ethRaised);
 
-    constructor(
-        Token _token, uint256 _price, 
-        uint256 _maxTokensSold, uint _maxTokensPerWallet, 
-        uint _saleOpen, uint _saleClosed,
-        uint _tokensSold, uint _applicationFee, bool _status
-        ) {
-        owner = msg.sender;
-        token = _token;
-        price = _price;
-        maxTokensSold = _maxTokensSold;
-        maxTokensPerWallet = _maxTokensPerWallet;
-        tokensSold = _tokensSold;
-        saleOpen = _saleOpen;
-        saleClosed = _saleClosed;
-        openStatus = _status;
-        applicationFee = _applicationFee;
-    }
-
     modifier onlyOwner() {
         require(msg.sender == owner, "Must be the owner!");
         _;
@@ -82,6 +64,24 @@ contract Crowdsale is ReentrancyGuard {
     modifier maximumTokensPerWallet() {
         require(maxTokensPerWallet >= userTokensPurchased[msg.sender]);
         _;
+    }
+
+    constructor(
+        Token _token, uint256 _price, 
+        uint256 _maxTokensSold, uint _maxTokensPerWallet, 
+        uint _saleOpen, uint _saleClosed,
+        uint _tokensSold, uint _applicationFee, bool _status
+        ) {
+        owner = msg.sender;
+        token = _token;
+        price = _price;
+        maxTokensSold = _maxTokensSold;
+        maxTokensPerWallet = _maxTokensPerWallet;
+        tokensSold = _tokensSold;
+        saleOpen = _saleOpen;
+        saleClosed = _saleClosed;
+        openStatus = _status;
+        applicationFee = _applicationFee;
     }
 
     // Buy tokens directly by sending Ether
