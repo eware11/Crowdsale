@@ -7,10 +7,15 @@ const ether = tokens;
 describe("Crowdsale", () => {
   let token, crowdsale, deployer, buyer, requester;
 
-  const PRICE = ether(1);
-  const MAX_TOKENS = ether(50);
-  const IS_SALE_CLOSED = false;
-  const ALLOW_MINTING_ON = (Date.now() + 120000).toString().slice(0, 10);
+  const OWNER = deployer.address
+  const PRICE = ether(.05);
+  const MAX_TOKENS_SOLD = ether(50);
+  const MAX_TOKENS_PER_WALLET = ether(5)
+  const TOKENS_SOLD = 
+  const SALE_OPEN = Date.now()
+  const SALE_CLOSED
+  const OPEN_STATUS
+  const APPLICATION_FEE = ether(.01)
 
   beforeEach(async () => {
     [deployer, buyer, requester] = await ethers.getSigners();
@@ -72,35 +77,35 @@ describe("Crowdsale", () => {
         { value: fee }
       );
     })
-    it("reverts if the user has already requested to be on the whitelist", async () => {
-      await expect(
-        crowdsale.connect(requester).requestWhitelist(
-          message,
-          name,
-          email,
-          website,
-          fee,
-          { value: fee }
-        )
-      ).to.be.revertedWith("Already requested");
-    });
-
-    it('Requires user paid application fee', async () => {
-      expect(await crowdsale.paidApplication(user1).to.equal(true));
-    });
-
-      it('Creates a pending whitelist request', async () => {
-        expect(await crowdsale.pendingRequests(user1).to.equal(true));
+      it("reverts if the user has already requested to be on the whitelist", async () => {
+        await expect(
+          crowdsale.connect(requester).requestWhitelist(
+            message,
+            name,
+            email,
+            website,
+            fee,
+            { value: fee }
+          )
+        ).to.be.revertedWith("Already requested");
       });
 
-      it('Saves proposal/request details', async () => {
-        expect(await crowdsale.createProposal.to.equal(NAME, EMAIL, WEBSITE, MESSAGE, false))
+      it('Requires user paid application fee', async () => {
+        expect(await crowdsale.paidApplication(user1).to.equal(true));
       });
 
-      it('emits whitelist requested event', async () => {
-        expect(await crowdsale.WhitelistRequested.to.equal(user1, EMAIL))
+        it('Creates a pending whitelist request', async () => {
+          expect(await crowdsale.pendingRequests(user1).to.equal(true));
+        });
+
+        it('Saves proposal/request details', async () => {
+          expect(await crowdsale.createProposal.to.equal(NAME, EMAIL, WEBSITE, MESSAGE, false))
+        });
+
+        it('emits whitelist requested event', async () => {
+          expect(await crowdsale.WhitelistRequested.to.equal(user1, EMAIL))
+        });
       });
-    });
 
   describe('View whitelist proposal', () => {
     it('Returns the proposal and the address it was created by', async () => {
