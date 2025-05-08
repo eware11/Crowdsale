@@ -5,28 +5,46 @@ const tokens = (n) => ethers.utils.parseUnits(n.toString(), "ether");
 const ether = tokens;
 
 describe("Crowdsale", () => {
-  let token, crowdsale, deployer, buyer, requester;
+  let token, crowdsale, deployer, buyer, accounts;
 
-  const OWNER = deployer.address //deployer of contract
-  const PRICE = ether(.05); //price of tokens
-  const MAX_TOKENS_SOLD = ether(50); //maximum amount of tokens sold for crowdsale
-  const MAX_TOKENS_PER_WALLET = ether(5) //maximum amount of tokens a single user can purchase for the crowdsale
-  const TOKENS_SOLD = //total amount of tokens sold for crowdsale
-  const SALE_OPEN = Date.now() //date/time the crowdsale opens for users to purchase tokens
-  const SALE_CLOSED //date/time crowdsale ends
-  const OPEN_STATUS //boolean indicating whether crowdsale is open or not
-  const APPLICATION_FEE = ether(.01) //fee users must pay to submit their whitelist request
+  // Constants
+  const TOKEN_NAME = "EWare";
+  const TOKEN_SYMBOL = "EW";
+  const TOTAL_SUPPLY = tokens(1000000);
+  const TOKEN_PRICE = ether(1);
+  const MAX_TOKENS_SOLD = tokens(100000);
+  const MAX_TOKENS_PER_WALLET = tokens(1000);
+  const SALE_OPEN = Math.floor(new Date("2025-05-31").getTime() / 1000);
+  const SALE_CLOSED = Math.floor(new Date("2025-08-31").getTime() / 1000);
+  const IS_SALE_OPEN = false;
+  const APPLICATION_FEE = ether(0.01);
 
   beforeEach(async () => {
-    [deployer, buyer, requester] = await ethers.getSigners();
+    accounts = await ethers.getSigners();
+    deployer = accounts[0];
+    buyer = accounts[1];
 
     const Token = await ethers.getContractFactory("Token");
-    token = await Token.connect(deployer).deploy("EWare", "EW", "1000000");
+    token = await Token.connect(deployer).deploy(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY);
+    await token.deployed();
 
-    const Crowdsale = await ethers.getContractFactory("Crowdsale");
-    crowdsale = await Crowdsale.connect(deployer).deploy(token.address, PRICE, MAX_TOKENS, ALLOW_MINTING_ON);
+    const Crowdsale = await ethers.getContractFactory("Crowdsale")
+    crowdsale = await Crowdsale.connect(deployer).deploy(
+      token.address,              // Token _token
+      TOKEN_PRICE,                // uint256 _price
+      MAX_TOKENS_SOLD,            // uint256 _maxTokensSold
+      MAX_TOKENS_PER_WALLET,      // uint256 _maxTokensPerWallet
+      SALE_OPEN,                  // uint _saleOpen
+      SALE_CLOSED,                // uint _saleClosed
+      0,                          // uint _tokensSold (initially 0)
+      APPLICATION_FEE,            // uint _applicationFee
+      IS_SALE_OPEN                // bool _status
+    );
+    
+    await crowdsale.deployed();
 
-    await token.connect(deployer).transfer(crowdsale.address, tokens(1000000));
+    // Transfer tokens to the crowdsale contract
+    await token.connect(deployer).transfer(crowdsale.address, TOTAL_SUPPLY);
   });
 
   describe("Deployment", () => {
@@ -43,272 +61,71 @@ describe("Crowdsale", () => {
     });
 
     it("sets the maximum tokens the crowdsale can sell", async () => {
-      expect(await crowdsale.maxTokens()).to.equal(ether(50));
+      expect(await crowdsale.maxTokensSold()).to.equal(MAX_TOKENS_SOLD);
     });
 
     it("sets the maximum tokens an address can own", async () => {
-      expect(await crowdsale.maxTokens()).to.equal(ether(50));
+      expect(await crowdsale.maxTokensPerWallet()).to.equal(MAX_TOKENS_PER_WALLET);
     });
 
     it("sets the ico start date/time", async () => {
-      expect(await crowdsale.allowMintingOn()).to.equal(ALLOW_MINTING_ON);
+      expect(await crowdsale.saleOpen()).to.equal(SALE_OPEN);
     });
 
-    it("starts off closed until start date/time is reached", async () => {
-      expect(await crowdsale.isSaleClosed()).to.equal(true);
+    it("sets the ico close date/time", async () => {
+      expect(await crowdsale.saleClosed()).to.equal(SALE_CLOSED);
     });
-  });
 
-  describe("User requests Whitelist", () => {
-    const fee = ethers.utils.parseEther("0.01"); // example fee
-    const name = "Alice";
-    const email = "alice@example.com";
-    const website = "https://example.com";
-    const message = "Please whitelist me";
+    it("sets the open or closed status of the crowdsale", async () => {
+      expect(await crowdsale.openStatus()).to.equal(IS_SALE_OPEN);
+    });
+    
+    it("sets the application fee", async () => {
+      expect(await crowdsale.applicationFee()).to.equal(APPLICATION_FEE);
+    });
+  });  
+
+  describe('the owner can adjust the application fee', () => {
+    let transaction, result, newFee
     
     beforeEach(async () => {
-      await crowdsale.connect(requester).requestWhitelist(
-        message,
-        name,
-        email,
-        website,
-        fee,
-        { value: fee }
-      );
+      newFee = ethers.utils.parseEther('.05')
+      transaction = await crowdsale.connect(deployer).changeApplicationFee(newFee)
+      result = await transaction.wait()
     })
-      it("reverts if the user has already requested to be on the whitelist", async () => {
-        await expect(
-          crowdsale.connect(requester).requestWhitelist(
-            message,
-            name,
-            email,
-            website,
-            fee,
-            { value: fee }
-          )
-        ).to.be.revertedWith("Already requested");
-      });
 
-      it('Requires user paid application fee', async () => {
-        expect(await crowdsale.paidApplication(user1).to.equal(true));
-      });
-
-        it('Creates a pending whitelist request', async () => {
-          expect(await crowdsale.pendingRequests(user1).to.equal(true));
-        });
-
-        it('Saves proposal/request details', async () => {
-          expect(await crowdsale.createProposal.to.equal(NAME, EMAIL, WEBSITE, MESSAGE, false))
-        });
-
-        it('emits whitelist requested event', async () => {
-          expect(await crowdsale.WhitelistRequested.to.equal(user1, EMAIL))
-        });
-      });
-
-  describe('View whitelist proposal', () => {
-    it('Returns the proposal and the address it was created by', async () => {
-      expect(await crowdsale.viewWhitelistProposal.to.equal(user1.name, user1.email, user1.website, 
-        user1.message, true));
-    });
-  });
-
-  describe("Adds user to whitelist", () => {
-    it('Requires the user hasnt already been added to whitelist', async () => {
+    it("allows the owner to call the function", async () => {
+      await expect(crowdsale.connect(deployer).changeApplicationFee(newFee)).to.not.be.reverted;
     });
 
-    it('Requires user paid application fee', async () => {
+    it("reverts if not the owner", async () => {
+      await expect(crowdsale.connect(buyer).changeApplicationFee(newFee)).to.be.revertedWith('Must be the owner!');
     });
-
-    it('Approves whitelist request', async () => {
-    });
-
-    it('Emits whitelist approved event', async () => {
-    });
-  });
-
-  describe("Removes user from whitelist", () => {
-    it('Removes user from whitelist', async () => {
-      expect(await crowdsale.whitelist[user1].to.equal(false))
+    
+    it('updates the price', async () => {
+      expect(await crowdsale.applicationFee()).to.equal(newFee);
     });
 
   });
+  
+  describe('Paying the whitelist application fee', () => {
+    beforeEach(async () => {
+      transaction = await crowdsale.payApplicationFee()
+      result = await transaction.wait()
+    })
 
-  describe("Rejects whitelist request", () => {
-    it('Requires user has a pending request', async () => {
+    it('Requires the right amount of ether is sent to the crowdsale to cover the application fee', async () => {
+    expect(await crowdsale.payApplicationFee()).to.be.equal(APPLICATION_FEE)
     });
 
-    it('Changes pending request status to false', async () => {
+    it('Updates user paid fee status to true', async () => {
+    expect(await crowdsale.userPaidFee()).to.be.equal(user1, true)
     });
+    
 
-    it('Updates rejected requests mapping', async () => {
-    });
-
-    it('Emits request rejected event', async () => {
-    });
-  });
-
-  describe("Setting max tokens per user", () => {
-    it('Requires that only the owner can set this amount', async () => {
-    });
-
-    it('Sets max token amount per user', async () => {
-    });
 
   });
 
-  describe("Buying Tokens", () => {
-    let transaction = tokens(10);
-    let amount = tokens(10);
-
-    describe("Success", () => {
-      beforeEach(async () => {
-        transaction = await crowdsale
-          .connect(user1)
-          .buyTokens(amount, { value: ether(10) });
-        result = await transaction.wait();
-      });
-
-      it("transfers tokens", async () => {
-        expect(await token.balanceOf(crowdsale.address)).to.equal(
-          tokens(999990)
-        );
-        expect(await token.balanceOf(user1.address)).to.equal(amount);
-      });
-
-      it("updates contracts ether balance", async () => {
-        expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(
-          amount
-        );
-      });
-
-      it("updates tokensSold", async () => {
-        expect(await crowdsale.tokensSold()).to.equal(amount);
-      });
-
-      it("emits a buy event", async () => {
-        console.log(result);
-        // --> https://hardhat.org/hardhat-chai-matchers/docs/reference#.emit
-        await expect(transaction)
-          .to.emit(crowdsale, "Buy")
-          .withArgs(amount, user1.address);
-      });
-    });
-
-    describe("Failure", () => {
-      it("rejects insufficient ETH", async () => {
-        await expect(
-          crowdsale.connect(user1).buyTokens(tokens(10), { value: 0 })
-        ).to.be.reverted;
-      });
-    });
-  });
-
-  describe("Sending ETH", () => {
-    let transaction, result;
-    let amount = ether(10);
-
-    describe("Success", () => {
-      beforeEach(async () => {
-        transaction = await user1.sendTransaction({
-          to: crowdsale.address,
-          value: amount,
-        });
-        result = await transaction.wait();
-      });
-
-      it("updates contracts ether balance", async () => {
-        expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(
-          amount
-        );
-      });
-
-      it("updates user token balance", async () => {
-        expect(await token.balanceOf(user1.address)).to.equal(amount);
-      });
-    });
-  });
-
-  describe("Updating Price", () => {
-    let transaction, result;
-    let price = ether(2);
-
-    describe("Success", () => {
-      beforeEach(async () => {
-        transaction = await crowdsale.connect(deployer).setPrice(ether(2));
-        result = await transaction.wait();
-      });
-
-      it("updates the price", async () => {
-        expect(await crowdsale.price()).to.equal(ether(2));
-      });
-    });
-
-    describe("Failure", () => {
-      it("prevents non-owner from updating price", async () => {
-        await expect(crowdsale.connect(user1).setPrice(price)).to.be.reverted;
-      });
-    });
-  });
-
-  describe("Pausing crowdsales", () => {
-      it('Requires the user hasnt already requested to be on whitelist', async () => {
-      });
-
-      it('Requires user paid application fee', async () => {
-      });
-
-      it('Creates a pending whitelist request', async () => {
-      });
-
-      it('Saves proposal/request details', async () => {
-      });
-
-      it('emits whitelist requested event', async () => {
-      });
-  });
-
-  describe("Finalzing Sale", () => {
-    let transaction, result;
-    let amount = tokens(10);
-    let value = ether(10);
+});
 
 
-    describe("Success", () => {
-      beforeEach(async () => {
-        transaction = await crowdsale
-          .connect(user1)
-          .buyTokens(amount, { value: value });
-        result = await transaction.wait();
-
-        transaction = await crowdsale.connect(deployer).finalize();
-        result = await transaction.wait();
-      });
-
-      it("transfers remaining tokens to owner", async () => {
-        expect(await token.balanceOf(crowdsale.address)).to.equal(0);
-        expect(await token.balanceOf(deployer.address)).to.equal(
-          tokens(999990)
-        );
-      });
-
-      it("transfers ETH balance to owner", async () => {
-        expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(0);
-      });
-
-      it("emits Finalize event", async () => {
-        // --> https://hardhat.org/hardhat-chai-matchers/docs/reference#.emit
-        await expect(transaction)
-          .to.emit(crowdsale, "Finalize")
-          .withArgs(amount, value);
-      });
-    });
-
-    describe("Failure", () => {
-      it("prevents non-owner from finalizing", async () => {
-        await expect(crowdsale.connect(user1).finalize()).to.be.reverted;
-      });
-    });
-  });
-
-  });

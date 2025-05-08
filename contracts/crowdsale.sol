@@ -20,7 +20,7 @@ contract Crowdsale is ReentrancyGuard {
     
     mapping(address => uint256) public userTokensPurchased;
     mapping(address => bool) public whitelistedUsers;
-    mapping(address => bool) public pendingWhitelistRequests;
+    mapping(address => bool) public doesUserHavePendingWhitelistRequest;
     mapping(address => Proposal) public proposals;
     mapping(address => bool) public userPaidFee;
 
@@ -34,6 +34,7 @@ contract Crowdsale is ReentrancyGuard {
         string message;
         bool accepted;
     }
+
     
     event WhitelistRequested(address indexed user, string userEmailAddress);
     event WhitelistApproved(address indexed user);
@@ -47,22 +48,13 @@ contract Crowdsale is ReentrancyGuard {
     }
 
     modifier onlyWhitelisted() {
-        require(whitelistedUsers[msg.sender], "Not on whitelist");
+        require(whitelistedUsers[msg.sender] == true, "Not on whitelist");
         _;
     }
 
-    modifier openSale() {
-        require(openStatus == true, "Sale is closed");
-        _;
-    }
-
-    modifier closeSale() {
-        require(openStatus == false);
-        _;
-    }
-
-    modifier maximumTokensPerWallet() {
-        require(maxTokensPerWallet >= userTokensPurchased[msg.sender]);
+    modifier onlyWhenOpen(bool _openStatus) {
+        openStatus = _openStatus;
+        require(_openStatus == true, "Sale is closed");
         _;
     }
 
@@ -84,68 +76,51 @@ contract Crowdsale is ReentrancyGuard {
         applicationFee = _applicationFee;
     }
 
-    // Buy tokens directly by sending Ether
-    receive() external payable onlyWhitelisted {
-        uint256 amount = (msg.value * 1e18) / price;
-        buyTokens(amount);
-    }
-
-    function setApplicationFee(uint _applicationFee) external onlyOwner {
+    function changeApplicationFee(uint _applicationFee) external onlyOwner {
         applicationFee = _applicationFee;
     }
 
-    function payApplicationFee() external payable{    
-        require(msg.value == applicationFee);
-        userPaidFee[msg.sender] = true;
+    function submitWhitelistApplication(address _user, string memory _message, string memory _name, 
+                                    string memory _email, string memory _website) 
+        public payable {    
+                                require(msg.value == applicationFee);
+                                require(userPaidFee[msg.sender] = true);
+                                Proposal({userAddress: msg.sender, message: _message, 
+                                            name: _name, email: _email, website: _website,
+                                            accepted: false});
+                                emit WhitelistRequested(_user, _email);
     }
 
-    // Request whitelist with proposal
-    function requestWhitelist(string memory _message, string memory _name, string memory _email, string memory _website) external {
-        require(userPaidFee[msg.sender] == true, "Already requested");
-        pendingWhitelistRequests[msg.sender] = true;
-        
-        // Save the proposal details
-        proposals[msg.sender] = Proposal({userAddress: msg.sender, name: _name, email: _email, website: _website, message: _message, accepted: false});
-
-        emit WhitelistRequested(msg.sender, _message);
-    }
-
-    // View a specific user's proposal
-    function viewWhitelistProposal(address _user) external view returns (Proposal memory) {
+    function viewWhitelistApplication(address _user) external view onlyOwner returns (Proposal memory) {
         return proposals[_user];
     }
 
-    // Add a user to the whitelist
     function approveWhitelistRequest(address _user) external onlyOwner {
-        require(whitelistedUsers[_user] == false, "Already in whitelist");
-        require(pendingWhitelistRequests[_user] == true, "No request found");
-        whitelistedUsers[_user] = true;
-        pendingWhitelistRequests[_user] = false;
+        require(whitelistedUsers[_user] == false);
+        require(doesUserHavePendingWhitelistRequest[_user] == true);
+        whitelistedUsers[_user] == true;
+        doesUserHavePendingWhitelistRequest[_user] = false;
         emit WhitelistApproved(_user);
     }
 
-    // Reject a user from the whitelist
     function rejectWhitelistRequest(address _user) external onlyOwner {
-        require(pendingWhitelistRequests[_user] == true, "No pending request");
+        require(doesUserHavePendingWhitelistRequest[_user] == true, "No pending request");
         whitelistedUsers[_user] = false;
-        pendingWhitelistRequests[_user] = false;
+        doesUserHavePendingWhitelistRequest[_user] = false;
         emit WhitelistRejected(_user);
     }
 
-    // Remove a user from the whitelist
     function removeUserFromWhitelist(address _user) external onlyOwner {
         whitelistedUsers[_user] = false;
     }
 
-    // Set token price
-    function setPrice(uint256 _price) public onlyOwner {
+    function setPrice(uint256 _price) external onlyOwner {
         price = _price;
     }
 
-    // Function for buying tokens
-    function buyTokens(uint256 _amount) public payable onlyWhitelisted maximumTokensPerWallet openSale nonReentrant {
+    function buyTokens(uint256 _amount) public payable onlyWhitelisted onlyWhenOpen(true) nonReentrant {
         require(block.timestamp >= saleOpen, "Minting not allowed yet");
-
+        require(userTokensPurchased[msg.sender] <= maxTokensPerWallet);
         uint256 expectedValue = (_amount * price) / 1e18;
         require(msg.value == expectedValue, "Incorrect ETH sent");
 
