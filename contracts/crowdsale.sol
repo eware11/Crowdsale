@@ -10,19 +10,36 @@ contract Crowdsale {
     uint256 public price;
     uint256 public maxTokens;
     uint256 public tokensSold;
+    uint public openDate;
+    bool public paused;
 
     event Buy(uint256 amount, address buyer);
     event Finalize(uint256 tokensSold, uint256 ethRaised);
+    event Request(address indexed _user);
+    event Whitelisted(address indexed _user, string message);
+    event Revoke(address indexed _user, string message);
+
+    mapping(address => bool) public whitelistedUsers;
+    mapping(address => Proposal) public requestedWhitelist;
+
+    struct Proposal{
+        string name;
+        string message;
+        bool approved;
+    }
 
     constructor(
         Token _token,
         uint256 _price,
-        uint256 _maxTokens
+        uint256 _maxTokens,
+        uint _openDate
     ) {
+        require(_openDate > block.timestamp);
         owner = msg.sender;
         token = _token;
         price = _price;
         maxTokens = _maxTokens;
+        openDate = _openDate;
     }
 
     modifier onlyOwner() {
@@ -42,7 +59,9 @@ contract Crowdsale {
         require(msg.value == (_amount / 1e18) * price);
         require(token.balanceOf(address(this)) >= _amount);
         require(token.transfer(msg.sender, _amount));
-
+        require(whitelistedUsers[msg.sender] == true, "Must be on whitelist");
+        require(block.timestamp >= openDate, "Sale not open yet");
+        require(paused == false, "Sale is paused");
         tokensSold += _amount;
 
         emit Buy(_amount, msg.sender);
@@ -50,6 +69,50 @@ contract Crowdsale {
 
     function setPrice(uint256 _price) public onlyOwner {
         price = _price;
+    }
+
+    function setOpenDate(uint _openDate) public onlyOwner {
+        openDate = _openDate;
+    }
+
+    function requestWhitelist(string memory _name, string memory _message) external {
+        
+        requestedWhitelist[msg.sender] = Proposal({
+        name: _name,
+        message: _message,
+        approved: false
+        });
+
+        emit Request(msg.sender);
+    }
+
+    function addToWhitelist(address _user) public onlyOwner {
+        whitelistedUsers[_user] = true;
+
+        Proposal storage proposal = requestedWhitelist[_user];
+
+        proposal.approved = true;
+
+
+        emit Whitelisted(_user, "Request Approved");
+    }
+
+    function removeFromWhitelist(address _user) public onlyOwner {
+        whitelistedUsers[_user] = false;
+
+        Proposal storage proposal = requestedWhitelist[_user];
+
+        proposal.approved = false;
+
+        emit Revoke(_user, "Removed from Whitelist");
+    }
+
+    function pauseSale() public onlyOwner {
+        paused = true;
+    }
+
+    function unpauseSale() public onlyOwner {
+        paused = false;
     }
 
     // Finalize Sale
