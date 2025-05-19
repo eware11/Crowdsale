@@ -1,24 +1,20 @@
-import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import Navbar from 'react-bootstrap/Navbar';
 
-function AppNavbar() {
-  return (
-    <Navbar bg="dark" variant="dark" expand="lg">
-      <Container>
-        <Navbar.Brand as={Link} to="/">MyCrowdsale</Navbar.Brand>
-        <Navbar.Toggle aria-controls="navbar-nav" />
-        <Navbar.Collapse id="navbar-nav">
-          <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/whitelist">Whitelist</Nav.Link>
-            <Nav.Link as={Link} to="/buy">Buy Tokens</Nav.Link>
-            <Nav.Link as={Link} to="/status">Sale Status</Nav.Link>
-            <Nav.Link as={Link} to="/admin">Admin Panel</Nav.Link>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
-  );
-};
+import logo from '../eware.png';
+
+const Navigation = () => {
+    return (
+        <Navbar className='my-3'>
+            <img
+                alt="logo"
+                src={logo}
+                width="40"
+                height="40"
+                className="d-inline-block align-top mx-3"
+            />
+            <Navbar.Brand href="#">DApp ICO Crowdsale</Navbar.Brand>
+        </Navbar>
+    );
+}
 
 export default Navigation;

@@ -9,7 +9,6 @@ import { ethers } from 'ethers'
 const Buy = ({ provider, price, crowdsale, setIsLoading }) => {
     const [amount, setAmount] = useState('0')
     const [isWaiting, setIsWaiting] = useState(false)
-    const [address, setAddress] = useState("")
 
     const buyHandler = async (e) => {
         e.preventDefault()
@@ -31,27 +30,7 @@ const Buy = ({ provider, price, crowdsale, setIsLoading }) => {
         setIsLoading(true)
     }
 
-    const addToWhitelistHandler = async (e) => {
-        e.preventDefault()
-        setIsWaiting(true)
-
-        try {
-            const signer = await provider.getSigner()
-
-            // We need to calculate the required ETH in order to buy the tokens...
-
-            const transaction = await crowdsale.connect(signer).addToWhitelist(address)
-            await transaction.wait()
-        } catch (error) {
-            window.alert('User rejected or transaction reverted')
-            console.error(error)
-        }
-
-        setIsLoading(true)
-    }
-
     return (
-        <>
         <Form onSubmit={buyHandler} style={{ maxWidth: '800px', margin: '50px auto' }}>
             <Form.Group as={Row}>
                 <Col>
@@ -68,24 +47,6 @@ const Buy = ({ provider, price, crowdsale, setIsLoading }) => {
                 </Col>
             </Form.Group>
         </Form>
-
-<Form onSubmit={addToWhitelistHandler} style={{ maxWidth: '800px', margin: '50px auto' }}>
-<Form.Group as={Row}>
-    <Col>
-        <Form.Control type="text" placeholder="Enter address" onChange={(e) => setAddress(e.target.value)} />
-    </Col>
-    <Col className='text-center'>
-        {isWaiting ? (
-            <Spinner animation="border" />
-        ) : (
-            <Button variant="primary" type="submit" style={{ width: '100%' }}>
-                Add to Whitelist
-            </Button>
-        )}
-    </Col>
-</Form.Group>
-</Form>
-</>
     );
 }
 
