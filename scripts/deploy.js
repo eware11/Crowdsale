@@ -7,11 +7,10 @@
 const hre = require("hardhat");
 
 async function main() {
-  const NAME = 'EWare Token'
+  const NAME = 'EWARE TOKEN'
   const SYMBOL = 'EWARE'
   const MAX_SUPPLY = '1000000'
   const PRICE = ethers.utils.parseUnits('0.025', 'ether')
-  const OPEN_DATE = 1747668833 //May 31st, 2025
 
   // Deploy Token
   const Token = await hre.ethers.getContractFactory("Token")
@@ -22,7 +21,7 @@ async function main() {
 
   // Deploy Crowdsale
   const Crowdsale = await hre.ethers.getContractFactory("Crowdsale")
-  const crowdsale = await Crowdsale.deploy(token.address, PRICE, ethers.utils.parseUnits(MAX_SUPPLY, 'ether', OPEN_DATE))
+  const crowdsale = await Crowdsale.deploy(token.address, PRICE, ethers.utils.parseUnits(MAX_SUPPLY, 'ether'))
   await crowdsale.deployed();
 
   console.log(`Crowdsale deployed to: ${crowdsale.address}\n`)
